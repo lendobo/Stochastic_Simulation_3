@@ -5,17 +5,18 @@ solving TSP.
 For documentation, see: https://tsplib95.readthedocs.io/en/stable/pages/usage.html#loading-problems
 """
 
-
+import matplotlib.pyplot as plt
 import random
 import math
 from tqdm import tqdm
 import tsplib95
+import copy
 
 
 ####################### DATA FUNCTIONS ###################################### # # # # # # # # # 
 
 # Using the tsp95 library to load the data
-problem = tsplib95.load('TSP-Configurations/eil51.tsp')
+problem = tsplib95.load('TSP-Configurations/eil51.tsp.txt')
 all_edges = list(problem.get_edges())
 cities = list(problem.get_edges())
 
@@ -44,8 +45,9 @@ def two_opt(route):
   i, j = random.sample(range(len(route)), 2)
   if i > j:
     i, j = j, i
-  route[i:j+1] = reversed(route[i:j+1])
-  return route
+  route_copy = copy.deepcopy(route)
+  route_copy[i:j+1] = list(reversed(route[i:j+1]))
+  return route_copy
 
 # Function to implement the simulated annealing algorithm
 def simulated_annealing(cities, temperature, cooling_rate):
@@ -78,7 +80,14 @@ cities = coord_list
 
 
 # Solve the TSP using simulated annealing with the given parameters
-solution = simulated_annealing(cities, 100, 0.01)
+solution = simulated_annealing(cities, 100, 0.00001)
+print(cost(solution))
+
+xs = [item[0] for item in solution]
+ys = [item[1] for item in solution]
+
+plt.plot(xs, ys)
+plt.show()
 
 # Print the final solution
 print(solution)
