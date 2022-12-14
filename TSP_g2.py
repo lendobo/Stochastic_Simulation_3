@@ -35,9 +35,8 @@ def distance(city1, city2):
 # Cost function that returns the total distance of a given route
 def cost(route):
   total_distance = 0
-  for i in range(len(route) - 1):
+  for i in range(-1, len(route) - 1):
     total_distance += distance(route[i], route[i + 1])
-  total_distance += distance(route[0], route[-1])
   return total_distance
 
 # Function to make a random 2-opt change to a given route
@@ -45,7 +44,10 @@ def two_opt(route):
   # Choose two edges at random and reverse the order of the cities they connect
   i, j = random.sample(range(len(route)), 2)
   if i > j:
-    i, j = j, i
+    for iteration in range(len(route) - i):
+      route.append(route.pop(0))
+      j += 1
+    i = 0
   route_copy = copy.deepcopy(route)
   route_copy[i:j+1] = list(reversed(route[i:j+1]))
   return route_copy
@@ -54,7 +56,6 @@ def two_opt(route):
 def simulated_annealing(cities, temperature, cooling_rate):
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
-
   costs = []
 
   with tqdm(total=10081) as pbar:
@@ -72,8 +73,7 @@ def simulated_annealing(cities, temperature, cooling_rate):
       temperature *= 1 - cooling_rate
 
       costs.append(cost(route))
-      pbar.update(1)
-  # Return the final route as the solution to the TSP
+      pbar.update(1)  # Return the final route as the solution to the TSP
   return route, costs
 
 
@@ -83,12 +83,13 @@ cities = coord_list
 
 
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 100, 0.0001)
+solution, costs = simulated_annealing(cities, 100, 0.00001)
 solution.append(solution[0])
 print(cost(solution))
 
 plt.figure(0)
-plt.plot(range(len(costs[len(costs)/10:])), costs[len(costs)/10:])
+# [int(len(costs)/10):]
+plt.plot(range(len(costs)), costs)
 
 plt.figure(1)
 
