@@ -21,7 +21,7 @@ import copy
 ####################### DATA FUNCTIONS ###################################### # # # # # # # # # 
 
 # Using the tsp95 library to load the data
-problem = tsplib95.load('TSP-Configurations/eil51.tsp')
+problem = tsplib95.load('TSP-Configurations/eil51.tsp.txt')
 all_edges = list(problem.get_edges())
 cities = list(problem.get_edges())
 
@@ -54,43 +54,106 @@ def cost(route):
 #   route_copy[i:j+1] = list(reversed(route[i:j+1]))
 #   return route_copy
 
+def shift(route, i, j):
+
+  for iteration in range(len(route) - i):
+
+    route.append(route.pop(0))
+    j += 1
+
+  return route, 0, j
+
+
+def get_next(route):
+
+  next_route = copy.deepcopy(route)
+
+  func = random.choice([0,1,2])
+  if func == 0:
+    next_route = reverse(next_route)
+  elif func == 1:
+    next_route = relocation(next_route)
+  else:
+    next_route = swap(next_route)
+
+  return next_route
+
 
 # Function to make a random 2-opt change to a given route
-def two_opt(route):
+def reverse(route):
+
   # Choose two edges at random and reverse the order of the cities they connect
   indices = random.sample(range(len(route)), 2)
   i, j = indices[0], indices[1]
   if i > j:
-    for iteration in range(len(route) - i):
-      route.append(route.pop(0))
-      j += 1
-    i = 0
+    route, i, j = shift(route, i, j)
   route_copy = copy.deepcopy(route)
   route_copy[i:j+1] = list(reversed(route[i:j+1]))
   return route_copy
 
+
+def relocation(route):
+
+  "Select a subroute from a to b and insert it at another position in the route"
+  # subroute_a = random.choice(range(len(route)))
+  # subroute_b = random.choice(range(len(route)))
+  # subroute = route[min(subroute_a,subroute_b):max(subroute_a, subroute_b)]
+  indices = random.sample(range(len(route)), 2)
+  i, j = indices[0], indices[1]
+
+  if i > j:
+    route, i, j = shift(route, i, j)
+
+  subroute = route[i:j]
+  del route[i:j]
+  insert_pos = random.choice(range(len(route)))
+
+  for i in subroute:
+
+      route.insert(insert_pos, i)
+
+  return route
+
+
+def swap(route):
+
+  indices = random.sample(range(len(route)), 2)
+  i, j = indices[0], indices[1]
+  route_copy = copy.deepcopy(route)
+  route_copy[i] = route[j]
+  route_copy[j] = route[i]
+  return route_copy
+
+
 # Function to implement the simulated annealing algorithm
 def simulated_annealing(cities, temperature, cooling_rate):
+
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
   costs = []
 
   with tqdm(total=10081) as pbar:
-    while temperature > 10**(-42):      # Make a random 2-opt change to the current route
-      new_route = two_opt(route)
+
+    while temperature > 10**(-42):
+
+    # Make a random 2-opt change to the current route
+      new_route = get_next(route)
       # Calculate the cost of the new route
       cost_delta = cost(new_route) - cost(route)
       # If the new route has a lower cost, accept it as the current route
+
       if cost_delta < 0:
         route = new_route
       # If the new route has a higher cost, accept it with a certain probability
       elif random.random() < pow(math.e, -cost_delta / temperature):
         route = new_route
+
       # Decrease the temperature according to the cooling rate
       temperature *= 1 - cooling_rate
 
       costs.append(cost(route))
       pbar.update(1)  # Return the final route as the solution to the TSP
+
   return route, costs
 
 
@@ -100,7 +163,7 @@ cities = coord_list
 
 
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 100, 0.00001)
+solution, costs = simulated_annealing(cities, 5000, 0.0001)
 solution.append(solution[0])
 print(cost(solution))
 plt.figure(0)
