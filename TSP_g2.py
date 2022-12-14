@@ -30,40 +30,42 @@ coord_list = list(problem.node_coords.values())
 
 ######################## TSP FUNCTIONS #################################  # # # # # # # # # 
 
-# Function to calculate the Euclidean distance between two cities
+"Function to calculate the Euclidean distance between two cities"
 def distance(city1, city2):
+
   x1, y1 = city1
   x2, y2 = city2
   return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
 
-# Cost function that returns the total distance of a given route
+"Cost function that returns the total distance of a given route"
 def cost(route):
+
   total_distance = 0
+
   for i in range(-1, len(route) - 1):
+
     total_distance += distance(route[i], route[i + 1])
+
   return total_distance
 
-# Function to make a random 2-opt change to a given route
-# def two_opt(route):
-#   # Choose two edges at random and reverse the order of the cities they connect
-#   i, j = random.sample(range(len(route)), 2)
-#   if i > j:
-#     i, j = j, i
-#   route_copy = copy.deepcopy(route)
-#   route_copy[i:j+1] = list(reversed(route[i:j+1]))
-#   return route_copy
 
+# This is in case we dont want the complication of i->j
+# def shift(route, i, j):
+#   return route, j, i
+
+
+"Treats the path as a circle, shifts list to allow reverse"
 def shift(route, i, j):
 
   for iteration in range(len(route) - i):
 
     route.append(route.pop(0))
-    j += 1
 
-  return route, 0, j
+  return route, 0, j + (len(route) - i)
 
 
+"Chooses which type of change to make to the route"
 def get_next(route):
 
   next_route = copy.deepcopy(route)
@@ -79,7 +81,7 @@ def get_next(route):
   return next_route
 
 
-# Function to make a random 2-opt change to a given route
+"Function to make a random 2-opt change to a given route"
 def reverse(route):
 
   # Choose two edges at random and reverse the order of the cities they connect
@@ -92,12 +94,9 @@ def reverse(route):
   return route_copy
 
 
+"Select a subroute from a to b and insert it at another position in the route"
 def relocation(route):
 
-  "Select a subroute from a to b and insert it at another position in the route"
-  # subroute_a = random.choice(range(len(route)))
-  # subroute_b = random.choice(range(len(route)))
-  # subroute = route[min(subroute_a,subroute_b):max(subroute_a, subroute_b)]
   indices = random.sample(range(len(route)), 2)
   i, j = indices[0], indices[1]
 
@@ -115,6 +114,7 @@ def relocation(route):
   return route
 
 
+"Takes two indices at random and swaps the cities at said indices"
 def swap(route):
 
   indices = random.sample(range(len(route)), 2)
@@ -125,7 +125,7 @@ def swap(route):
   return route_copy
 
 
-# Function to implement the simulated annealing algorithm
+"Function to implement the simulated annealing algorithm"
 def simulated_annealing(cities, temperature, cooling_rate):
 
   # Initialize the algorithm with a random route and the given temperature
@@ -161,9 +161,8 @@ def simulated_annealing(cities, temperature, cooling_rate):
 # cities = [(42.3600825, -71.0588801), (40.7128, -74.0060), (39.9526, -75.1652), (38.9072, -77.0369), (25.7617, -80.1918)]
 cities = coord_list
 
-
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 5000, 0.0001)
+solution, costs = simulated_annealing(cities, 5000, 0.00001)
 solution.append(solution[0])
 print(cost(solution))
 plt.figure(0)
