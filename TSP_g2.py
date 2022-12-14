@@ -75,6 +75,8 @@ def get_next(route):
     next_route = reverse(next_route)
   elif func == 1:
     next_route = relocation(next_route)
+  elif func == 2:
+    next_route = insert_city(next_route)
   else:
     next_route = swap(next_route)
 
@@ -114,6 +116,16 @@ def relocation(route):
   return route
 
 
+def insert_city(route):
+    "Insert city at node j before node i"
+    node_j = random.choice(route)
+    route.remove(node_j)
+    node_i = random.choice(route)
+    index = route.index(node_i)
+    route.insert(index, node_j)
+    
+    return route
+
 "Takes two indices at random and swaps the cities at said indices"
 def swap(route):
 
@@ -132,7 +144,7 @@ def simulated_annealing(cities, temperature, cooling_rate):
   route = random.sample(cities, len(cities))
   costs = []
 
-  with tqdm(total=10081) as pbar:
+  with tqdm(total=105174) as pbar:
 
     while temperature > 10**(-42):
 
@@ -162,7 +174,7 @@ def simulated_annealing(cities, temperature, cooling_rate):
 cities = coord_list
 
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 5000, 0.00001)
+solution, costs = simulated_annealing(cities, 5000, 0.001)
 solution.append(solution[0])
 print(cost(solution))
 plt.figure(0)
