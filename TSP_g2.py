@@ -3,6 +3,11 @@ This script uses the tsplib95 library, which contains a lot of useful methods fo
 solving TSP.
 
 For documentation, see: https://tsplib95.readthedocs.io/en/stable/pages/usage.html#loading-problems
+
+
+Some inspiration for solving TSP with SA: 
+https://raw.githubusercontent.com/goossaert/algorithms/master/simulated_annealing/annealing.py
+https://medium.com/@francis.allanah/travelling-salesman-problem-using-simulated-annealing-f547a71ab3c6
 """
 
 import matplotlib.pyplot as plt
@@ -16,7 +21,7 @@ import copy
 ####################### DATA FUNCTIONS ###################################### # # # # # # # # # 
 
 # Using the tsp95 library to load the data
-problem = tsplib95.load('TSP-Configurations/eil51.tsp.txt')
+problem = tsplib95.load('TSP-Configurations/eil51.tsp')
 all_edges = list(problem.get_edges())
 cities = list(problem.get_edges())
 
@@ -40,9 +45,21 @@ def cost(route):
   return total_distance
 
 # Function to make a random 2-opt change to a given route
+# def two_opt(route):
+#   # Choose two edges at random and reverse the order of the cities they connect
+#   i, j = random.sample(range(len(route)), 2)
+#   if i > j:
+#     i, j = j, i
+#   route_copy = copy.deepcopy(route)
+#   route_copy[i:j+1] = list(reversed(route[i:j+1]))
+#   return route_copy
+
+
+# Function to make a random 2-opt change to a given route
 def two_opt(route):
   # Choose two edges at random and reverse the order of the cities they connect
-  i, j = random.sample(range(len(route)), 2)
+  indices = random.sample(range(len(route)), 2)
+  i, j = indices[0], indices[1]
   if i > j:
     for iteration in range(len(route) - i):
       route.append(route.pop(0))
@@ -86,10 +103,8 @@ cities = coord_list
 solution, costs = simulated_annealing(cities, 100, 0.00001)
 solution.append(solution[0])
 print(cost(solution))
-
 plt.figure(0)
-# [int(len(costs)/10):]
-plt.plot(range(len(costs)), costs)
+plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):])
 
 plt.figure(1)
 
