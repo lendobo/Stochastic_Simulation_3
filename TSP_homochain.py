@@ -163,20 +163,8 @@ def simulated_annealing(cities, temperature, cooling_rate):
 
     while temperature > 10**(temp_exponent):
 
-
-    # Make a random 2-opt change to the current route
+      # Make a random 2-opt change to the current route
       route, cost = metropolis(route, cities, temperature)
-
-    #   new_route = get_next(route)
-    #   # Calculate the cost of the new route
-    #   cost_delta = cost(new_route) - cost(route)
-    #   # If the new route has a lower cost, accept it as the current route
-
-    #   if cost_delta < 0:
-    #     route = new_route
-    #   # If the new route has a higher cost, accept it with a certain probability
-    #   elif random.random() < pow(math.e, -cost_delta / temperature):
-    #     route = new_route
 
       # Decrease the temperature according to the cooling rate
       temperature *= 1 - cooling_rate
