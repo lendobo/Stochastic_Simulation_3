@@ -137,7 +137,7 @@ def swap(route):
   route_copy[j] = route[i]
   return route_copy
 
-def metropolis(route_0, cities, temperature, MCLen=10, cost_fn=cost):
+def metropolis(route_0, cities, temperature, MCLen=100, cost_fn=cost):
     costs = []
     route = route_0
     for i in range(MCLen):
@@ -184,26 +184,27 @@ def simulated_annealing(cities, temperature, cooling_rate):
   return route, costs_all
 
 
-# Define the list of cities
-# cities = [(42.3600825, -71.0588801), (40.7128, -74.0060), (39.9526, -75.1652), (38.9072, -77.0369), (25.7617, -80.1918)]
-cities = coord_list
+if __name__ == '__main__':
+  # Define the list of cities
+  # cities = [(42.3600825, -71.0588801), (40.7128, -74.0060), (39.9526, -75.1652), (38.9072, -77.0369), (25.7617, -80.1918)]
+  cities = coord_list
 
-# Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 5000, 0.001)
-solution.append(solution[0])
-print(cost(solution))
-plt.figure(0)
-plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):])
-# plt.vlines(x=[10,20,30,40,50,60,70,80,90,100], ymin=0, ymax=costs[math.floor(len(costs)/10):][-1], color='r')
-# print(costs)
+  # Solve the TSP using simulated annealing with the given parameters
+  solution, costs = simulated_annealing(cities, 100, 0.01)
+  solution.append(solution[0])
+  print(cost(solution))
+  plt.figure(0)
+  plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):],linewidth=0.75)
+  # plt.vlines(x=[10,20,30,40,50,60,70,80,90,100], ymin=0, ymax=costs[math.floor(len(costs)/10):][-1], color='r')
+  # print(costs)
 
-plt.figure(1)
+  plt.figure(1)
 
-xs = [item[0] for item in solution]
-ys = [item[1] for item in solution]
+  xs = [item[0] for item in solution]
+  ys = [item[1] for item in solution]
 
-plt.plot(xs, ys)
-plt.show()
+  plt.plot(xs, ys)
+  plt.show()
 
-# Print the final solution
-# print(solution)
+  # Print the final solution
+  # print(solution)
