@@ -137,6 +137,17 @@ def swap(route):
   route_copy[j] = route[i]
   return route_copy
 
+def metropolis(route_0, cities, temperature, MCLen=50, cost_fn=cost):
+    route = route_0
+    for i in range(MCLen):
+        new_route = get_next(route)
+        cost_delta = cost_fn(new_route) - cost_fn(route)
+        if cost_delta < 0:
+            route = new_route
+        elif random.random() < pow(math.e, - cost_delta / temperature):
+            route = new_route
+        cost = cost_fn(route)
+    return route, cost
 
 "Function to implement the simulated annealing algorithm"
 def simulated_annealing(cities, temperature, cooling_rate):
@@ -147,27 +158,30 @@ def simulated_annealing(cities, temperature, cooling_rate):
 
   # determining size of the progress bar
   temp_exponent = -42
-  iter_num = (temp_exponent - np.log10(5000)) / np.log10(0.99)
+  iter_num = (temp_exponent - np.log10(temperature)) / np.log10(1-cooling_rate)
   with tqdm(total=iter_num) as pbar:
 
     while temperature > 10**(temp_exponent):
 
-    # Make a random 2-opt change to the current route
-      new_route = get_next(route)
-      # Calculate the cost of the new route
-      cost_delta = cost(new_route) - cost(route)
-      # If the new route has a lower cost, accept it as the current route
 
-      if cost_delta < 0:
-        route = new_route
-      # If the new route has a higher cost, accept it with a certain probability
-      elif random.random() < pow(math.e, -cost_delta / temperature):
-        route = new_route
+    # Make a random 2-opt change to the current route
+      route, cost = metropolis(route, cities, temperature)
+
+    #   new_route = get_next(route)
+    #   # Calculate the cost of the new route
+    #   cost_delta = cost(new_route) - cost(route)
+    #   # If the new route has a lower cost, accept it as the current route
+
+    #   if cost_delta < 0:
+    #     route = new_route
+    #   # If the new route has a higher cost, accept it with a certain probability
+    #   elif random.random() < pow(math.e, -cost_delta / temperature):
+    #     route = new_route
 
       # Decrease the temperature according to the cooling rate
       temperature *= 1 - cooling_rate
 
-      costs.append(cost(route))
+      costs.append(cost)
       pbar.update(1)  # Return the final route as the solution to the TSP
 
   return route, costs
