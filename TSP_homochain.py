@@ -170,9 +170,15 @@ def simulated_annealing(cities, temperature, cooling_rate):
       route, costs = metropolis(route, cities, temperature)
 
       # Decrease the temperature according to the cooling rate
-      temperature *= 1 - cooling_rate
+      temperature *= 1 - cooling_rate      
 
       costs_all.append(costs)
+
+      # break out of the loop if cost improvement over past 1000 iterations is less than 0.1
+      if len(costs_all) > 1000:
+        if np.std(costs_all[-1000:]) < 0.1:
+          break
+
       pbar.update(1)  # Return the final route as the solution to the TSP
 
   return route, costs_all
@@ -183,11 +189,12 @@ def simulated_annealing(cities, temperature, cooling_rate):
 cities = coord_list
 
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 5000, 0.0001)
+solution, costs = simulated_annealing(cities, 5000, 0.001)
 solution.append(solution[0])
 print(cost(solution))
 plt.figure(0)
 plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):])
+# plt.vlines(x=[10,20,30,40,50,60,70,80,90,100], ymin=0, ymax=costs[math.floor(len(costs)/10):][-1], color='r')
 # print(costs)
 
 plt.figure(1)
