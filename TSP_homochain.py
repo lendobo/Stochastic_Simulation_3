@@ -137,24 +137,27 @@ def swap(route):
   route_copy[j] = route[i]
   return route_copy
 
-def metropolis(route_0, cities, temperature, MCLen=50, cost_fn=cost):
+def metropolis(route_0, cities, temperature, MCLen=10, cost_fn=cost):
+    costs = []
     route = route_0
     for i in range(MCLen):
         new_route = get_next(route)
         cost_delta = cost_fn(new_route) - cost_fn(route)
         if cost_delta < 0:
             route = new_route
+            # print('CHANGE')
         elif random.random() < pow(math.e, - cost_delta / temperature):
             route = new_route
-        cost = cost_fn(route)
-    return route, cost
+            # print('CHANGE')
+        costs.append(cost_fn(route))
+    return route, costs
 
 "Function to implement the simulated annealing algorithm"
 def simulated_annealing(cities, temperature, cooling_rate):
 
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
-  costs = []
+  costs_all = []
 
   # determining size of the progress bar
   temp_exponent = -42
@@ -164,15 +167,15 @@ def simulated_annealing(cities, temperature, cooling_rate):
     while temperature > 10**(temp_exponent):
 
       # Make a random 2-opt change to the current route
-      route, cost = metropolis(route, cities, temperature)
+      route, costs = metropolis(route, cities, temperature)
 
       # Decrease the temperature according to the cooling rate
       temperature *= 1 - cooling_rate
 
-      costs.append(cost)
+      costs_all.append(costs)
       pbar.update(1)  # Return the final route as the solution to the TSP
 
-  return route, costs
+  return route, costs_all
 
 
 # Define the list of cities
@@ -180,11 +183,12 @@ def simulated_annealing(cities, temperature, cooling_rate):
 cities = coord_list
 
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 5000, 0.01)
+solution, costs = simulated_annealing(cities, 5000, 0.0001)
 solution.append(solution[0])
 print(cost(solution))
 plt.figure(0)
 plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):])
+# print(costs)
 
 plt.figure(1)
 
@@ -195,4 +199,4 @@ plt.plot(xs, ys)
 plt.show()
 
 # Print the final solution
-print(solution)
+# print(solution)
