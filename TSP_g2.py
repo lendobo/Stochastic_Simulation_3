@@ -11,6 +11,7 @@ https://medium.com/@francis.allanah/travelling-salesman-problem-using-simulated-
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 import random
 import math
 from tqdm import tqdm
@@ -21,7 +22,7 @@ import copy
 ####################### DATA FUNCTIONS ###################################### # # # # # # # # # 
 
 # Using the tsp95 library to load the data
-problem = tsplib95.load('TSP-Configurations/eil51.tsp.txt')
+problem = tsplib95.load('TSP-Configurations/eil51_x.tsp.txt')
 all_edges = list(problem.get_edges())
 cities = list(problem.get_edges())
 
@@ -144,9 +145,11 @@ def simulated_annealing(cities, temperature, cooling_rate):
   route = random.sample(cities, len(cities))
   costs = []
 
-  with tqdm(total=105174) as pbar:
+  temp_exponent = -42
+  iter_num = (temp_exponent - np.log10(5000)) / np.log10(0.99)
+  with tqdm(total=iter_num) as pbar:
 
-    while temperature > 10**(-42):
+    while temperature > 10**(temp_exponent):
 
     # Make a random 2-opt change to the current route
       new_route = get_next(route)
@@ -174,7 +177,7 @@ def simulated_annealing(cities, temperature, cooling_rate):
 cities = coord_list
 
 # Solve the TSP using simulated annealing with the given parameters
-solution, costs = simulated_annealing(cities, 5000, 0.001)
+solution, costs = simulated_annealing(cities, 5000, 0.01)
 solution.append(solution[0])
 print(cost(solution))
 plt.figure(0)
