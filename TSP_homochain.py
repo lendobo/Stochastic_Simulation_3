@@ -153,33 +153,41 @@ def metropolis(route_0, cities, temperature, MCLen=100, cost_fn=cost):
     return route, costs
 
 "Function to implement the simulated annealing algorithm"
-def simulated_annealing(cities, temperature, cooling_rate):
+def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chains=5000, MCLen=100):
 
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
   costs_all = []
 
-  # determining size of the progress bar
-  temp_exponent = -42
-  iter_num = (temp_exponent - np.log10(temperature)) / np.log10(1-cooling_rate)
-  with tqdm(total=iter_num) as pbar:
+  if sweep == False:
+    # determining size of the progress bar
+    temp_exponent = -42
+    iter_num = (temp_exponent - np.log10(temperature)) / np.log10(1-cooling_rate)
+    with tqdm(total=iter_num) as pbar:
+      while temperature > 10**(temp_exponent):
+          # Make a random 2-opt change to the current route
+          route, costs = metropolis(route, cities, temperature, MCLen=MCLen)
 
-    while temperature > 10**(temp_exponent):
+          # Decrease the temperature according to the cooling rate
+          temperature *= 1 - cooling_rate      
 
-      # Make a random 2-opt change to the current route
+          costs_all.append(costs)
+
+          # # break out of the loop if cost improvement over past 1000 iterations is less than 0.1
+          # if len(costs_all) > 1000:
+          #   if np.std(costs_all[-1000:]) < 0.1:
+          #     break
+
+          pbar.update(1)  # Return the final route as the solution to the TSP
+  else:
+    chain = 0
+    while chain < num_chains:
       route, costs = metropolis(route, cities, temperature)
-
-      # Decrease the temperature according to the cooling rate
-      temperature *= 1 - cooling_rate      
-
       costs_all.append(costs)
+      chain += 1
 
-      # break out of the loop if cost improvement over past 1000 iterations is less than 0.1
-      if len(costs_all) > 1000:
-        if np.std(costs_all[-1000:]) < 0.1:
-          break
-
-      pbar.update(1)  # Return the final route as the solution to the TSP
+      temperature *= 1 - cooling_rate
+    
 
   return route, costs_all
 
