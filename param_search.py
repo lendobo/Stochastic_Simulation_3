@@ -55,16 +55,19 @@ def multi_run_temp_scanner(route_0, cities, temp_range, MCLen=100, cost_fn=cost,
 temp_range = np.linspace(50,300,100)
 route = random.sample(cities, len(cities))
 
-## UNCOMMENT if acceptance rate tester should be re-run
+# UNCOMMENT if acceptance rate tester should be re-run
 # acceptances_per_temp = multi_run_temp_scanner(route, cities, temp_range, MCLen=100, cost_fn=cost, runs=100)
 # np.save('Data/acceptances_per_temp.npy', acceptances_per_temp)
 
 acceptances_per_temp = np.load('Data/acceptances_per_temp.npy')
+
 print(acceptances_per_temp[70])
 print(temp_range[70])
 
 
-### PLOTTING ACCEPTANCE RATE VS TEMP ###
+## PLOTTING ACCEPTANCE RATE VS TEMP ###
+# for i in [10, 22, 48]:
+#     plt.scatter(temp_range[i], acceptances_per_temp[i], color='r')
 # plt.plot(temp_range, acceptances_per_temp)
 # plt.xlabel('Initial temperature')
 # plt.ylabel('Acceptance rate')
@@ -78,87 +81,123 @@ print(temp_range[70])
 # TODO: allow for multiple initial temps to be tested
 
 # function that runs simulated_annealing for a range of MC lengths and cooling rates
-def mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=230, n=1):
+def mc_len_cool_rate(cities, mc_len_range, cool_rate_range, iters = 500, temp=100, n=3):
     """
     Runs simulated annealing for a range of MC lengths and cooling rates
     """
-    num_chains = 500
-
-    results = np.zeros((len(mc_len_range), len(cool_rate_range), num_chains, 2))
+    results = np.zeros((len(mc_len_range), len(cool_rate_range), iters, 2))
+    stds = np.zeros((len(mc_len_range), len(cool_rate_range), iters, 2))
     
-    pbar = tqdm(total=len(mc_len_range)*len(cool_rate_range))
+    pbar = tqdm(total=len(mc_len_range)*len(cool_rate_range)*n)
     for mc_len in mc_len_range:
+        num_chains = iters/mc_len
         for cool_rate in cool_rate_range:
             # Initialize arrays to store the results for each run
-            chain_optima = np.zeros((num_chains, n))
-            lin_chain_optima = np.zeros((num_chains, n))
+            costs = np.zeros((iters, n))
+            lin_costs = np.zeros((iters, n))
             
             for i in range(n):
                 # Run simulated annealing
-                route, all_costs, lin_route, lin_costs_all = simulated_annealing(cities, temp, cool_rate, MCLen=mc_len, num_chains=num_chains, sweep=True)
-                print('MC length: ', mc_len, 'Cooling rate: ', cool_rate, 'Cost: ', cost(route), 'Lin Cost: ', cost(lin_route))
+                route, all_costs, lin_route, lin_costs_all = simulated_annealing(cities, temp, cool_rate, MCLen=mc_len, num_chains=num_chains, sweep=True, iters=iters)
+                # print('MC length: ', mc_len, 'Cooling rate: ', cool_rate, 'Cost: ', cost(route), 'Lin Cost: ', cost(lin_route))
 
                 # Store the results for this run
-                chain_optima[:, i] = [np.min(costs) for costs in all_costs]
-                lin_chain_optima[:, i] = [np.min(costs) for costs in lin_costs_all]
+                costs[:, i] = np.asarray(all_costs).flatten()
+                lin_costs[:, i] = np.asarray(lin_costs_all).flatten()
+
+                pbar.update(1)
 
             # Calculate the average results over all runs
-            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 0] = np.mean(chain_optima, axis=1)
-            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 1] = np.mean(lin_chain_optima, axis=1)
+            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 0] = np.mean(costs, axis=1)
+            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 1] = np.mean(lin_costs, axis=1)
 
-            pbar.update(1)
+            stds[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 0] = np.std(costs, axis=1)
+            stds[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 1] = np.std(lin_costs, axis=1)
     
     np.save('Data/results.npy', results)
 
-    return results
+    return results, stds
 
 
-# mc_len_range = [10, 20, 50, 100, 200, 500, 1000]
-mc_len_range = [5,10,20]
-cool_rate_range = [0.01, 0.1, 0.2]
-
-# # UNCOMMENT if MC length and cooling rate tester should be re-run
-# results_sweep = mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=230)
-# np.save('Data/results.npy', results_sweep)
 
 # shape of results: [3, 2, 1000] / [mc_len_range, cool_rate_range, num_chains, cool_type]
 
-def plot_results(results, mc_len_range, cool_rate_range):
+def plot_results(results, stds, iters, mc_len_range, cool_rate_range):
     """
     Plots the results of the mc_len_cool_rate function
     """
     m_len = len(mc_len_range)
     c_len = len(cool_rate_range)
 
+
     fig, axs = plt.subplots(2, m_len, figsize=(10, 5), sharey=True)
     fig.suptitle('Cost of optimal solution per chain', fontsize=18)
 
     for i in range(m_len):
         for j in range(c_len):
-            axs[0, i].plot(results[i,j,:,0], alpha=0.9)
+            axs[0, i].plot(results[i,j,:,0], alpha=0.9, label=f'rate:{cool_rate_range[j]}')
+            axs[0, i].fill_between(np.arange(0, iters), results[i,j,:,0] - stds[i,j,:,0], results[i,j,:,0] + stds[i,j,:,0], alpha=0.2)
             axs[0, i].set_title('MC length: ' + str(mc_len_range[i]))
-            axs[0, i].set_xlim(0, 500)
-            # axs[0, i].set_ylim(0, 1.5)
-            axs[0, i].legend([f'rate:{cr}' for cr in cool_rate_range], loc='upper right')
+            axs[0, i].set_xlim(0, iters)
+            if i ==1:
+                axs[0, i].legend(loc='upper right')
 
             axs[1, i].plot(results[i,j,:,1], alpha=0.9)
-            axs[1, i].set_xlim(0, 500)
-            # axs[1, i].set_ylim(0, 1.5)
-            axs[1, i].legend(cool_rate_range, loc='upper right')
+            axs[1, i].fill_between(np.arange(0, iters), results[i,j,:,1] - stds[i,j,:,1], results[i,j,:,1] + stds[i,j,:,1], alpha=0.2)
+            axs[1, i].set_xlim(0, iters)
+            # axs[1, i].legend(cool_rate_range, loc='upper right')
 
     # Add y label for left side of plot
     fig.text(0.01, 0.5, 'Cost', ha='left',va='center', rotation='vertical', fontsize=14)
     
-    # Add y label for right side of plot
-    # fig.text(0.93, 0.5, 'Cooling', ha='', va='center', rotation='vertical', fontsize=14)
 
     # Add subplot titles
-    axs[0, 2].set_ylabel('Geometric Cooling', fontsize=14, ha='left')
-    axs[1, 2].set_ylabel('Linear Cooling', fontsize=14, ha='right')
+    axs[0, m_len-1].set_ylabel('Geometric Cooling', fontsize=14, ha='left')
+    axs[1, m_len-1].set_ylabel('Linear Cooling', fontsize=14, ha='right')
     axs[1, m_len//2].set_xlabel('MC Number / Cooling Step', fontsize=14)
     plt.tight_layout()
     plt.show()
 
+
+##### EXPERIMENTS #####
+# SETUP: FIRST PLOT: SHOW THAT THERE IS NO DIFFERENCE BETWEEN GEOMETRIC AND LINEAR COOLING
+# MAKE A PLLOT SHOWING HOW DIFFERENT MC LENS DON'T CONVERGE FOR DIFFERENT COOLING RATES
+# EACH PLOT WILL HAVE 3 LINES FOR 3 DIFFERENT INITIAL TEMPS
+
+# mc_len_range = [10, 20, 50, 100, 200, 500, 1000]
+mc_len_range = [5, 10, 50] # [10,100,250]
+cool_rate_range = [0.01, 0.05, 0.1]
+iters=50000
+n=20
+temps=[75, 105, 170]
+
+# # UNCOMMENT if MC length and cooling rate tester should be re-run
+for t in temps:
+    results_sweep, stds_sweep = mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=t, iters=iters, n=n)
+    f_mean = f'Data/means_temp_' + str(t) + '.npy'
+    f_std = f'Data/stds_temp_' + str(t) + '.npy'
+    np.save(f_mean, results_sweep)
+    np.save(f_std, stds_sweep)
+
+
+# # plot results
+results_sweep = np.load('Data/means_temp_' + str(105) + '.npy')
+stds_sweep = np.load('Data/stds_temp_' + str(105) + '.npy')
+
+plot_results(results_sweep, stds_sweep, iters, mc_len_range, cool_rate_range)
+
+
+
+# EXPERIMENTAL DESIGN || SWEEP ||
+
+# Cool_rates = [0.01, 0.05, 0.2]
+# N_runs = 50
+# N_chains = 600
+
+
+# EXPERIMENTAL DESIGN || ROUTEFINDER ||
+# Cool_rate = [0.001]
+# N_runs = 100
 
 
 
@@ -187,9 +226,3 @@ def plot_results(results, mc_len_range, cool_rate_range):
 #                 axs[i, j].legend()
 #     plt.tight_layout()
 #     plt.show()
-
-
-
-# plot results
-results_sweep = np.load('Data/results.npy')
-plot_results(results_sweep, mc_len_range, cool_rate_range)

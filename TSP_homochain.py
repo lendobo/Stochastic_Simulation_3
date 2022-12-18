@@ -153,7 +153,7 @@ def metropolis(route_0, cities, temperature, MCLen=100, cost_fn=cost):
     return route, costs
 
 "Function to implement the simulated annealing algorithm"
-def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chains=5000, MCLen=100):
+def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chains=5000, MCLen=100, iters=500):
 
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
@@ -182,18 +182,24 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
           pbar.update(1)  # Return the final route as the solution to the TSP
   else:
     chain = 0
-    lin_temp = temperature # temperature for linear cooling rate
+    lin_temp_0 = temperature # initial temperature for linear cooling rate
+    lin_temp = lin_temp_0
+    x = 0
+    rate_ratio = cooling_rate / 0.01
     while chain < num_chains:
-      route, costs = metropolis(route, cities, temperature)
+      route, costs = metropolis(route, cities, temperature, MCLen=MCLen)
       costs_all.append(costs)
 
-      lin_route, lin_costs = metropolis(route, cities, lin_temp)
+      lin_route, lin_costs = metropolis(route, cities, lin_temp, MCLen=MCLen)
       lin_costs_all.append(lin_costs)
 
       chain += 1
 
-      temperature *= 1 - cooling_rate
-      lin_temp -= cooling_rate
+      temperature = np.max([temperature * 1 - cooling_rate, 10**(-42)])
+      lin_temp = np.max([lin_temp_0 - rate_ratio * (lin_temp_0/num_chains) * x, 10**(-42)])
+
+      x+=1
+      
 
     return route, costs_all, lin_route, lin_costs_all
 
