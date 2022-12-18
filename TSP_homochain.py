@@ -158,6 +158,7 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
   costs_all = []
+  lin_costs_all = []
 
   if sweep == False:
     # determining size of the progress bar
@@ -181,13 +182,20 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
           pbar.update(1)  # Return the final route as the solution to the TSP
   else:
     chain = 0
+    lin_temp = temperature # temperature for linear cooling rate
     while chain < num_chains:
       route, costs = metropolis(route, cities, temperature)
       costs_all.append(costs)
+
+      lin_route, lin_costs = metropolis(route, cities, lin_temp)
+      lin_costs_all.append(lin_costs)
+
       chain += 1
 
       temperature *= 1 - cooling_rate
-    
+      lin_temp -= cooling_rate
+
+    return route, costs_all, lin_route, lin_costs_all
 
   return route, costs_all
 

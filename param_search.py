@@ -65,11 +65,11 @@ print(temp_range[70])
 
 
 ### PLOTTING ACCEPTANCE RATE VS TEMP ###
-plt.plot(temp_range, acceptances_per_temp)
-plt.xlabel('Initial temperature')
-plt.ylabel('Acceptance rate')
-plt.title('Initial Acceptance rate vs initial temperature')
-plt.show()
+# plt.plot(temp_range, acceptances_per_temp)
+# plt.xlabel('Initial temperature')
+# plt.ylabel('Acceptance rate')
+# plt.title('Initial Acceptance rate vs initial temperature')
+# plt.show()
 
 # T = 230 -> accept rate ~ 0.95
 
@@ -84,17 +84,19 @@ def mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=230):
     """
     num_chains = 1000
 
-    results = np.zeros((len(mc_len_range), len(cool_rate_range), num_chains))
+    results = np.zeros((len(mc_len_range), len(cool_rate_range), num_chains, 2))
     
     pbar = tqdm(total=len(mc_len_range)*len(cool_rate_range))
     for mc_len in mc_len_range:
         for cool_rate in cool_rate_range:
-            route, all_costs = simulated_annealing(cities, temp, cool_rate, MCLen=mc_len, num_chains=num_chains, sweep=True)
-            print('MC length: ', mc_len, 'Cooling rate: ', cool_rate, 'Cost: ', cost(route))
-
+            route, all_costs, lin_route, lin_costs_all = simulated_annealing(cities, temp, cool_rate, MCLen=mc_len, num_chains=num_chains, sweep=True)
+            print('MC length: ', mc_len, 'Cooling rate: ', cool_rate, 'Cost: ', cost(route), 'Lin Cost: ', cost(lin_route))
+            
             chain_optima = [np.min(costs) for costs in all_costs]
+            lin_chain_optima = [np.min(costs) for costs in lin_costs_all]
 
-            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :] = chain_optima
+            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 0] = chain_optima
+            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 1] = lin_chain_optima
 
             pbar.update(1)
     
@@ -120,18 +122,24 @@ def plot_results(results, mc_len_range, cool_rate_range):
     m_len = len(mc_len_range)
     c_len = len(cool_rate_range)
 
-    fig, axs = plt.subplots(m_len, c_len, figsize=(10, 5))
-    fig.suptitle('Cost of optimal solution per chain')
+    fig, axs = plt.subplots(m_len, c_len, figsize=(10, 5), sharex=False)
+    fig.suptitle('Cost of optimal solution per chain', fontsize=18)
 
     for i in range(m_len):
         for j in range(c_len):
-            axs[i, j].plot(results[i,j,:])
+            axs[i, j].plot(results[i,j,:,0], label='Geometric Cooling')
+            axs[i, j].plot(results[i,j,:,1], label='Linear Cooling', alpha = 0.5)
             axs[i, j].set_title('MC length: ' + str(mc_len_range[i]) + ', Cooling rate: ' + str(cool_rate_range[j]))
-            axs[i, j].set_xlabel('Cost')
-            axs[i, j].set_ylabel('Frequency')
-
+            if i == m_len-1 and j == 1:
+                axs[i, j].set_xlabel('MC Number / Cooling Step', fontsize=14)
+            if j == 0 and i == 1:
+                axs[i, j].set_ylabel('Cost', fontsize=14)
+            axs[i, j].set_xlim(0, 500)
+            if i == 0 and j == 2:
+                axs[i, j].legend()
     plt.tight_layout()
     plt.show()
+
 
 # plot results
 results_sweep = np.load('Data/results.npy')
