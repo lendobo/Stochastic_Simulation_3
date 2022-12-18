@@ -165,28 +165,28 @@ def plot_results(results, stds, iters, mc_len_range, cool_rate_range):
 # EACH PLOT WILL HAVE 3 LINES FOR 3 DIFFERENT INITIAL TEMPS
 
 # mc_len_range = [10, 20, 50, 100, 200, 500, 1000]
-mc_len_range = [5, 10, 50] # [10,100,250]
-cool_rate_range = [0.01, 0.05, 0.1]
-iters=50000
-n=20
-temps=[75, 105, 170]
+mc_len_range = [10, 50, 100] # [10,100,250]
+cool_rate_range = [0.01, 0.05, 0.1, 0.2]
+iters=30000
+n=5
+temps=[76, 106, 171]
 
-# # UNCOMMENT if MC length and cooling rate tester should be re-run
-for t in temps:
-    results_sweep, stds_sweep = mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=t, iters=iters, n=n)
-    f_mean = f'Data/means_temp_' + str(t) + '.npy'
-    f_std = f'Data/stds_temp_' + str(t) + '.npy'
-    np.save(f_mean, results_sweep)
-    np.save(f_std, stds_sweep)
+# UNCOMMENT if MC length and cooling rate tester should be re-run
+# for t in temps:
+#     results_sweep, stds_sweep = mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=t, iters=iters, n=n)
+#     f_mean = f'Data/means_temp_' + str(t) + '.npy'
+#     f_std = f'Data/stds_temp_' + str(t) + '.npy'
+#     np.save(f_mean, results_sweep)
+#     np.save(f_std, stds_sweep)
 
 
 # # plot results
-results_sweep = np.load('Data/means_temp_' + str(105) + '.npy')
-stds_sweep = np.load('Data/stds_temp_' + str(105) + '.npy')
+results_sweep = np.load('Data/means_temp_' + str(106) + '.npy')
+stds_sweep = np.load('Data/stds_temp_' + str(106) + '.npy')
 
 plot_results(results_sweep, stds_sweep, iters, mc_len_range, cool_rate_range)
 
-
+print(results_sweep[0,1,-1,0])
 
 # EXPERIMENTAL DESIGN || SWEEP ||
 

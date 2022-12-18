@@ -195,7 +195,7 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
 
       chain += 1
 
-      temperature = np.max([temperature * 1 - cooling_rate, 10**(-42)])
+      temperature = np.max([temperature * (1 - cooling_rate), 10**(-42)])
       lin_temp = np.max([lin_temp_0 - rate_ratio * (lin_temp_0/num_chains) * x, 10**(-42)])
 
       x+=1
