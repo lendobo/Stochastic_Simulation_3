@@ -78,31 +78,40 @@ print(temp_range[70])
 # TODO: allow for multiple initial temps to be tested
 
 # function that runs simulated_annealing for a range of MC lengths and cooling rates
-def mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=230):
+def mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=230, n=1):
     """
     Runs simulated annealing for a range of MC lengths and cooling rates
     """
-    num_chains = 1000
+    num_chains = 500
 
     results = np.zeros((len(mc_len_range), len(cool_rate_range), num_chains, 2))
     
     pbar = tqdm(total=len(mc_len_range)*len(cool_rate_range))
     for mc_len in mc_len_range:
         for cool_rate in cool_rate_range:
-            route, all_costs, lin_route, lin_costs_all = simulated_annealing(cities, temp, cool_rate, MCLen=mc_len, num_chains=num_chains, sweep=True)
-            print('MC length: ', mc_len, 'Cooling rate: ', cool_rate, 'Cost: ', cost(route), 'Lin Cost: ', cost(lin_route))
+            # Initialize arrays to store the results for each run
+            chain_optima = np.zeros((num_chains, n))
+            lin_chain_optima = np.zeros((num_chains, n))
             
-            chain_optima = [np.min(costs) for costs in all_costs]
-            lin_chain_optima = [np.min(costs) for costs in lin_costs_all]
+            for i in range(n):
+                # Run simulated annealing
+                route, all_costs, lin_route, lin_costs_all = simulated_annealing(cities, temp, cool_rate, MCLen=mc_len, num_chains=num_chains, sweep=True)
+                print('MC length: ', mc_len, 'Cooling rate: ', cool_rate, 'Cost: ', cost(route), 'Lin Cost: ', cost(lin_route))
 
-            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 0] = chain_optima
-            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 1] = lin_chain_optima
+                # Store the results for this run
+                chain_optima[:, i] = [np.min(costs) for costs in all_costs]
+                lin_chain_optima[:, i] = [np.min(costs) for costs in lin_costs_all]
+
+            # Calculate the average results over all runs
+            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 0] = np.mean(chain_optima, axis=1)
+            results[mc_len_range.index(mc_len), cool_rate_range.index(cool_rate), :, 1] = np.mean(lin_chain_optima, axis=1)
 
             pbar.update(1)
     
     np.save('Data/results.npy', results)
 
     return results
+
 
 # mc_len_range = [10, 20, 50, 100, 200, 500, 1000]
 mc_len_range = [5,10,20]
@@ -112,9 +121,8 @@ cool_rate_range = [0.01, 0.1, 0.2]
 # results_sweep = mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=230)
 # np.save('Data/results.npy', results_sweep)
 
-# shape of results: [3, 2, 1000] / [mc_len_range, cool_rate_range, num_chains]
+# shape of results: [3, 2, 1000] / [mc_len_range, cool_rate_range, num_chains, cool_type]
 
-# function that makes a 2x3 plot of the results of the mc_len_cool_rate function
 def plot_results(results, mc_len_range, cool_rate_range):
     """
     Plots the results of the mc_len_cool_rate function
@@ -122,23 +130,64 @@ def plot_results(results, mc_len_range, cool_rate_range):
     m_len = len(mc_len_range)
     c_len = len(cool_rate_range)
 
-    fig, axs = plt.subplots(m_len, c_len, figsize=(10, 5), sharex=False)
+    fig, axs = plt.subplots(2, m_len, figsize=(10, 5), sharey=True)
     fig.suptitle('Cost of optimal solution per chain', fontsize=18)
 
     for i in range(m_len):
         for j in range(c_len):
-            axs[i, j].plot(results[i,j,:,0], label='Geometric Cooling')
-            axs[i, j].plot(results[i,j,:,1], label='Linear Cooling', alpha = 0.5)
-            axs[i, j].set_title('MC length: ' + str(mc_len_range[i]) + ', Cooling rate: ' + str(cool_rate_range[j]))
-            if i == m_len-1 and j == 1:
-                axs[i, j].set_xlabel('MC Number / Cooling Step', fontsize=14)
-            if j == 0 and i == 1:
-                axs[i, j].set_ylabel('Cost', fontsize=14)
-            axs[i, j].set_xlim(0, 500)
-            if i == 0 and j == 2:
-                axs[i, j].legend()
+            axs[0, i].plot(results[i,j,:,0], alpha=0.9)
+            axs[0, i].set_title('MC length: ' + str(mc_len_range[i]))
+            axs[0, i].set_xlim(0, 500)
+            # axs[0, i].set_ylim(0, 1.5)
+            axs[0, i].legend([f'rate:{cr}' for cr in cool_rate_range], loc='upper right')
+
+            axs[1, i].plot(results[i,j,:,1], alpha=0.9)
+            axs[1, i].set_xlim(0, 500)
+            # axs[1, i].set_ylim(0, 1.5)
+            axs[1, i].legend(cool_rate_range, loc='upper right')
+
+    # Add y label for left side of plot
+    fig.text(0.01, 0.5, 'Cost', ha='left',va='center', rotation='vertical', fontsize=14)
+    
+    # Add y label for right side of plot
+    # fig.text(0.93, 0.5, 'Cooling', ha='', va='center', rotation='vertical', fontsize=14)
+
+    # Add subplot titles
+    axs[0, 2].set_ylabel('Geometric Cooling', fontsize=14, ha='left')
+    axs[1, 2].set_ylabel('Linear Cooling', fontsize=14, ha='right')
+    axs[1, m_len//2].set_xlabel('MC Number / Cooling Step', fontsize=14)
     plt.tight_layout()
     plt.show()
+
+
+
+
+### PREVIOUS WORKING ONE, UNCOMMENT TO COMPARE PLOTTING STYLES ###
+# def plot_results(results, mc_len_range, cool_rate_range):
+#     """
+#     Plots the results of the mc_len_cool_rate function
+#     """
+#     m_len = len(mc_len_range)
+#     c_len = len(cool_rate_range)
+
+#     fig, axs = plt.subplots(m_len, c_len, figsize=(10, 5), sharex=False)
+#     fig.suptitle('Cost of optimal solution per chain', fontsize=18)
+
+#     for i in range(m_len):
+#         for j in range(c_len):
+#             axs[i, j].plot(results[i,j,:,0], label='Geometric Cooling')
+#             axs[i, j].plot(results[i,j,:,1], label='Linear Cooling', alpha = 0.5)
+#             axs[i, j].set_title('MC length: ' + str(mc_len_range[i]) + ', Cooling rate: ' + str(cool_rate_range[j]))
+#             if i == m_len-1 and j == 1:
+#                 axs[i, j].set_xlabel('MC Number / Cooling Step', fontsize=14)
+#             if j == 0 and i == 1:
+#                 axs[i, j].set_ylabel('Cost', fontsize=14)
+#             axs[i, j].set_xlim(0, 500)
+#             if i == 0 and j == 2:
+#                 axs[i, j].legend()
+#     plt.tight_layout()
+#     plt.show()
+
 
 
 # plot results
