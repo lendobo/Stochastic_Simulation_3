@@ -6,7 +6,7 @@ from TSP_homochain import *
 
 ### DATA ###
 
-problem = tsplib95.load('TSP-Configurations/eil51_x.tsp.txt')
+problem = tsplib95.load('TSP-Configurations/a280.tsp.txt')
 cities  = list(problem.node_coords.values()) 
 
 ### FUNCTIONS ###
@@ -59,10 +59,10 @@ route = random.sample(cities, len(cities))
 # acceptances_per_temp = multi_run_temp_scanner(route, cities, temp_range, MCLen=100, cost_fn=cost, runs=100)
 # np.save('Data/acceptances_per_temp.npy', acceptances_per_temp)
 
-acceptances_per_temp = np.load('Data/acceptances_per_temp.npy')
+# acceptances_per_temp = np.load('Data/acceptances_per_temp.npy')
 
-print(acceptances_per_temp[70])
-print(temp_range[70])
+# print(acceptances_per_temp[70])
+# print(temp_range[70])
 
 
 ## PLOTTING ACCEPTANCE RATE VS TEMP ###
@@ -165,24 +165,24 @@ def plot_results(results, stds, iters, mc_len_range, cool_rate_range):
 # EACH PLOT WILL HAVE 3 LINES FOR 3 DIFFERENT INITIAL TEMPS
 
 # mc_len_range = [10, 20, 50, 100, 200, 500, 1000]
-mc_len_range = [10, 50, 100] # [10,100,250]
+mc_len_range = [50, 100, 500] # [10,100,250]
 cool_rate_range = [0.01, 0.05, 0.1, 0.2]
-iters=30000
-n=5
-temps=[76, 106, 171]
+iters=40000
+n=10
+temps=[75, 105, 170]
 
-# UNCOMMENT if MC length and cooling rate tester should be re-run
+# # UNCOMMENT if MC length and cooling rate tester should be re-run
 # for t in temps:
 #     results_sweep, stds_sweep = mc_len_cool_rate(cities, mc_len_range, cool_rate_range, temp=t, iters=iters, n=n)
-#     f_mean = f'Data/means_temp_' + str(t) + '.npy'
-#     f_std = f'Data/stds_temp_' + str(t) + '.npy'
+#     f_mean = f'Data/means_temp_' + str(t) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '.npy'
+#     f_std = f'Data/stds_temp_' + str(t) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '.npy'
 #     np.save(f_mean, results_sweep)
 #     np.save(f_std, stds_sweep)
 
 
 # # plot results
-results_sweep = np.load('Data/means_temp_' + str(106) + '.npy')
-stds_sweep = np.load('Data/stds_temp_' + str(106) + '.npy')
+results_sweep = np.load('Data/means_temp_' + str(171) + '.npy')
+stds_sweep = np.load('Data/stds_temp_' + str(171) + '.npy')
 
 plot_results(results_sweep, stds_sweep, iters, mc_len_range, cool_rate_range)
 

@@ -22,7 +22,7 @@ import copy
 ####################### DATA FUNCTIONS ###################################### # # # # # # # # # 
 
 # Using the tsp95 library to load the data
-problem = tsplib95.load('TSP-Configurations/eil51_x.tsp.txt')
+problem = tsplib95.load('TSP-Configurations/a280.tsp.txt')
 all_edges = list(problem.get_edges())
 cities = list(problem.get_edges())
 
