@@ -17,6 +17,7 @@ import math
 from tqdm import tqdm
 import tsplib95
 import copy
+import pickle
 
 
 ####################### DATA FUNCTIONS ###################################### # # # # # # # # # 
@@ -153,32 +154,29 @@ def metropolis(route_0, cities, temperature, MCLen=100, cost_fn=cost):
     return route, costs
 
 "Function to implement the simulated annealing algorithm"
-def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chains=5000, MCLen=100, iters=500):
+def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chains=5000, MCLen=100):
 
   # Initialize the algorithm with a random route and the given temperature
   route = random.sample(cities, len(cities))
+  lin_route = copy.deepcopy(route)
+
   costs_all = []
   lin_costs_all = []
 
   if sweep == False:
     # determining size of the progress bar
-    temp_exponent = -42
-    iter_num = (temp_exponent - np.log10(temperature)) / np.log10(1-cooling_rate)
-    with tqdm(total=iter_num) as pbar:
-      while temperature > 10**(temp_exponent):
+    chain = 0
+    with tqdm(total=num_chains) as pbar:
+      while chain < num_chains:
           # Make a random 2-opt change to the current route
           route, costs = metropolis(route, cities, temperature, MCLen=MCLen)
 
           # Decrease the temperature according to the cooling rate
-          temperature *= 1 - cooling_rate      
-
+          temperature = np.max([temperature * (1 - cooling_rate), 10**(-42)])
+   
           costs_all.append(costs)
 
-          # # break out of the loop if cost improvement over past 1000 iterations is less than 0.1
-          # if len(costs_all) > 1000:
-          #   if np.std(costs_all[-1000:]) < 0.1:
-          #     break
-
+          chain += 1
           pbar.update(1)  # Return the final route as the solution to the TSP
   else:
     chain = 0
@@ -190,7 +188,7 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
       route, costs = metropolis(route, cities, temperature, MCLen=MCLen)
       costs_all.append(costs)
 
-      lin_route, lin_costs = metropolis(route, cities, lin_temp, MCLen=MCLen)
+      lin_route, lin_costs = metropolis(lin_route, cities, lin_temp, MCLen=MCLen)
       lin_costs_all.append(lin_costs)
 
       chain += 1
@@ -199,6 +197,7 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
       lin_temp = np.max([lin_temp_0 - rate_ratio * (lin_temp_0/num_chains) * x, 10**(-42)])
 
       x+=1
+      print(lin_temp)
       
 
     return route, costs_all, lin_route, lin_costs_all
@@ -208,17 +207,35 @@ def simulated_annealing(cities, temperature, cooling_rate, sweep=False, num_chai
 
 if __name__ == '__main__':
   # Define the list of cities
-  # cities = [(42.3600825, -71.0588801), (40.7128, -74.0060), (39.9526, -75.1652), (38.9072, -77.0369), (25.7617, -80.1918)]
   cities = coord_list
 
   # Solve the TSP using simulated annealing with the given parameters
-  solution, costs = simulated_annealing(cities, 100, 0.01)
-  solution.append(solution[0])
-  print(cost(solution))
-  plt.figure(0)
+  all_cost = []
+  for rep in range(5):
+    solution, costs = simulated_annealing(cities, 170, 0.05, sweep=False, num_chains=2000, MCLen=500)
+    solution.append(solution[0])
+
+    print(cost(solution))
+    plt.figure(0)
+    # print(costs)
+    all_cost.append(costs)
+  
+  with open("Data/route_costs", "wb") as fp:   #Pickling
+    pickle.dump(all_cost, fp)
+  
+  costs = np.mean(all_cost, axis=0)
+  stds = np.std(all_cost, axis=0)
   plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):],linewidth=0.75)
-  # plt.vlines(x=[10,20,30,40,50,60,70,80,90,100], ymin=0, ymax=costs[math.floor(len(costs)/10):][-1], color='r')
-  # print(costs)
+  plt.fill_between(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):] - stds[math.floor(len(costs)/10):], costs[math.floor(len(costs)/10):] + stds[math.floor(len(costs)/10):], alpha=0.2)
+  plt.xlabel('Cooling Step')
+  plt.ylabel('Cost')
+
+
+  with open("Data/route_solution", "wb") as fp:   #Pickling
+    pickle.dump(solution, fp)
+
+  with open("Data/route_solution", "rb") as fp:   # Unpickling
+    solution = pickle.load(fp)
 
   plt.figure(1)
 
@@ -226,6 +243,8 @@ if __name__ == '__main__':
   ys = [item[1] for item in solution]
 
   plt.plot(xs, ys)
+  plt.xlabel('X Coordinate')
+  plt.ylabel('Y Coordinate')
   plt.show()
 
   # Print the final solution
