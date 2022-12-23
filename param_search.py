@@ -60,20 +60,20 @@ route = random.sample(cities, len(cities))
 # np.save('Data/acc_stds.npy', acc_stds)
 
 
-# # ## PLOTTING ACCEPTANCE RATE VS TEMP ###
-# acceptances_per_temp = np.load('Data/acceptances_per_temp.npy')
-# acc_stds = np.load('Data/acc_stds.npy')
+# ## PLOTTING ACCEPTANCE RATE VS TEMP ###
+acceptances_per_temp = np.load('Data/acceptances_per_temp.npy')
+acc_stds = np.load('Data/acc_stds.npy')
 
 
-# for i in [8, 48, -4]:
-#     plt.scatter(temp_range[i], acceptances_per_temp[i], color='r')
-# plt.plot(temp_range, acceptances_per_temp)
-# plt.fill_between(temp_range, acceptances_per_temp-acc_stds, acceptances_per_temp+acc_stds, alpha=0.2)
-# plt.xlabel('Initial temperature', fontsize=15)
-# plt.ylabel('Acceptance rate', fontsize=15)
-# plt.title('Initial Acceptance rate vs initial temperature', fontsize=15)
-# plt.xlim(65,300)
-# plt.show()
+for i in [8, 48, -4]:
+    plt.scatter(temp_range[i], acceptances_per_temp[i], color='r')
+plt.plot(temp_range, acceptances_per_temp)
+plt.fill_between(temp_range, acceptances_per_temp-acc_stds, acceptances_per_temp+acc_stds, alpha=0.2)
+plt.xlabel('Initial temperature', fontsize=15)
+plt.ylabel('Acceptance rate', fontsize=15)
+plt.title('Initial Acceptance rate vs initial temperature', fontsize=15)
+plt.xlim(65,300)
+plt.show()
 
 
 
@@ -127,7 +127,7 @@ def mc_len_cool_rate(cities, mc_len_range, cool_rate_range, iters = 500, temp=10
 
 # shape of results: [3, 2, 1000] / [mc_len_range, cool_rate_range, num_chains, cool_type]
 
-# THIS ONE PLOT GEO AND LIN AND OPTIMAL COST PLOT
+# THIS ONE PLOT GEO AND LIN COMPARISON
 def plot_results(results, stds, iters, mc_len_range, cool_rate_range):
     """
     Plots the results of the mc_len_cool_rate functiion, comparing linear and cooling rates, 
@@ -136,38 +136,27 @@ def plot_results(results, stds, iters, mc_len_range, cool_rate_range):
     m_len = len(mc_len_range)
     c_len = len(cool_rate_range)
 
-    if m_len > 1:
-        fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
-        i = 0
-        for j in range(c_len):
-            axs[0, 0].plot(results[i,j,:,0], alpha=0.9, label=f'rate:{cool_rate_range[j]}')
-            axs[0, 0].fill_between(np.arange(0, iters), results[i,j,:,0] - stds[i,j,:,0], results[i,j,:,0] + stds[i,j,:,0], alpha=0.2)
-            axs[0, 0].set_title('MC length: ' + str(mc_len_range[i]))
-            axs[0, 0].set_xlim(0, iters)
-            if i == 0:
-                axs[0, i].legend(loc='upper right')
-
-            axs[0, 1].plot(results[1,j,:,1], alpha=0.9)
-            axs[0, 1].fill_between(np.arange(0, iters), results[i,j,:,1] - stds[i,j,:,1], results[i,j,:,1] + stds[i,j,:,1], alpha=0.2)
-            axs[0, 1].set_xlim(0, iters)
-
-            
-            axs[0, 1].set_facecolor('0.9')
-            # axs[0, i].set_facecolor('0.9')
-            fig.suptitle('Comparing Linear and Geometric Cooling', fontsize=18)
-
-
-
-        axs[1, m_len//2].set_xlabel('MC Number / Cooling Step', fontsize=14)
-
-    else:
-        fig, axs = plt.subplots(1, m_len, figsize=(10, 5), sharey=True)
-        axs[0].plot(results[0,0,:,0], alpha=0.9, label=f'rate:{cool_rate_range[0]}')
-        axs[0].fill_between(np.arange(0, iters), results[0,0,:,0] - stds[0,0,:,0], results[0,0,:,0] + stds[0,0,:,0], alpha=0.2)
-        axs[0].set_title('MC length: ' + str(mc_len_range[0]))
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+    i = 0
+    for j in range(c_len):
+        axs[0].plot(results[i,j,:,0], alpha=0.9, label=f'rate:{cool_rate_range[j]}')
+        axs[0].fill_between(np.arange(0, iters), results[i,j,:,0] - stds[i,j,:,0], results[i,j,:,0] + stds[i,j,:,0], alpha=0.2)
+        axs[0].set_title('MC length: ' + str(mc_len_range[i]))
         axs[0].set_xlim(0, iters)
         axs[0].legend(loc='upper right')
 
+        axs[1].set_title('MC length: ' + str(mc_len_range[i]))
+        axs[1].plot(results[1,j,:,1], alpha=0.9)
+        axs[1].fill_between(np.arange(0, iters), results[i,j,:,1] - stds[i,j,:,1], results[i,j,:,1] + stds[i,j,:,1], alpha=0.2)
+        axs[1].set_xlim(0, iters)
+
+        
+        axs[1].set_facecolor('0.9')
+        # axs[0, i].set_facecolor('0.9')
+        fig.suptitle(r'Comparing Linear and Geometric Cooling. $T_0: 170$', fontsize=18)
+
+        axs[0].set_xlabel('Iteration Number', fontsize=14, position='center')
+        axs[1].set_xlabel('Iteration Number', fontsize=14, position='center')
         
 
     # Add y label for left side of plot
@@ -203,7 +192,7 @@ def plot_sweep_results(all_results, stds, iters, mc_len_range, cool_rate_range):
                 if i == 0:
                     axs[t, i].legend(loc='upper right')
             axs[t, i].tick_params(axis='y', labelrotation=45)
-            axs[t, i].set_xticks([0, 10, 20, 30, 40, 50])
+            axs[t, i].set_xticklabels([0, 10, 20, 30, 40, 50])
 
 
     axs[2,m_len//2].set_xlabel('Iterations (Thousands)', fontsize=14, color='black')
@@ -252,8 +241,10 @@ for t in temps:
     results_sweep.append(np.load(f'Data/means_temp_' + str(t) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '_iters_' + str(iters) + '.npy'))
     stds_sweep.append(np.load(f'Data/stds_temp_' + str(t) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '_iters_' + str(iters) + '.npy'))
 
-    # geo_lin_res = np.load(f'Data/means_temp_' + str(t) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '_iters_' + str(iters) + '.npy')
-    # geo_lin_std = np.load(f'Data/stds_temp_' + str(t) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '_iters_' + str(iters) + '.npy')
+geo_lin_res = np.load(f'Data/means_temp_' + str(170) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '_iters_' + str(iters) + '.npy')
+geo_lin_std = np.load(f'Data/stds_temp_' + str(170) + str(mc_len_range[0]) + '_' + str(mc_len_range[-1]) + '_iters_' + str(iters) + '.npy')
+
+plot_results(geo_lin_res, geo_lin_std, iters, mc_len_range, cool_rate_range)
 
 
 plot_sweep_results(results_sweep, stds_sweep, iters, mc_len_range, cool_rate_range)

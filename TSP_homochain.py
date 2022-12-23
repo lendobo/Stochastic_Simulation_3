@@ -225,11 +225,6 @@ if __name__ == '__main__':
   
   costs = np.mean(all_cost, axis=0)
   stds = np.std(all_cost, axis=0)
-  plt.plot(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):],linewidth=0.75)
-  plt.fill_between(range(len(costs[math.floor(len(costs)/10):])), costs[math.floor(len(costs)/10):] - stds[math.floor(len(costs)/10):], costs[math.floor(len(costs)/10):] + stds[math.floor(len(costs)/10):], alpha=0.2)
-  plt.xlabel('Cooling Step')
-  plt.ylabel('Cost')
-
 
   with open("Data/route_solution", "wb") as fp:   #Pickling
     pickle.dump(solution, fp)
